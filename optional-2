@@ -1,0 +1,93 @@
+#include <Arduino.h>
+
+// Pin definitions for ESP32
+const int rows[2] = {25, 26};   // Row pins (GPIO25, GPIO26)
+const int cols[3] = {32, 33, 34}; // Column pins (GPIO32, GPIO33, GPIO34)
+const int ledPin = 2;            // Onboard LED pin (GPIO2)
+
+// Key mapping
+const char keys[2][3] = {
+  {'1', '2', '3'},
+  {'4', '5', '6'}
+};
+
+// Adjustable sampling time
+const int samplingDelay = 3;    // Delay between samples (in milliseconds)
+const int stableReadCount = 3;  // Number of stable reads to confirm a press
+
+void setup() {
+  // Set row pins as outputs
+  for (int i = 0; i < 2; i++) {
+    pinMode(rows[i], OUTPUT);
+    digitalWrite(rows[i], HIGH); // Keep rows HIGH initially
+  }
+
+  // Set column pins as inputs with pull-up resistors
+  for (int i = 0; i < 3; i++) {
+    pinMode(cols[i], INPUT_PULLUP);
+  }
+
+  // LED setup (inbuilt LED)
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, LOW); // Ensure LED is OFF initially
+
+  // Initialize Serial Monitor for debugging
+  Serial.begin(115200);
+}
+
+bool isButtonPressed(int row, int col) {
+  int stableReads = 0;
+
+  // Take multiple samples to confirm stability
+  for (int i = 0; i < stableReadCount; i++) {
+    if (digitalRead(cols[col]) == LOW) {
+      stableReads++;
+    }
+    delay(samplingDelay); // Delay between samples
+  }
+
+  // Return true if stable reads confirm a press
+  return (stableReads == stableReadCount);
+}
+
+void loop() {
+  char pressedKey = '\0'; // Variable to store the pressed key
+
+  // Scan each row
+  for (int r = 0; r < 2; r++) {
+    digitalWrite(rows[r], LOW); // Set the current row LOW
+
+    // Check each column for a button press
+    for (int c = 0; c < 3; c++) {
+      if (isButtonPressed(r, c)) { // Use stable sampling logic
+        pressedKey = keys[r][c]; // Get the pressed key
+        break; // Exit the column loop
+      }
+    }
+
+    digitalWrite(rows[r], HIGH); // Set the current row back to HIGH
+
+    // If a button is detected, exit the row loop
+    if (pressedKey != '\0') {
+      break;
+    }
+  }
+
+  // Handle the pressed key (if any)
+  if (pressedKey != '\0') {
+    Serial.print("Button pressed: ");
+    Serial.println(pressedKey);
+
+    // Turn on the onboard LED
+    digitalWrite(ledPin, HIGH);
+//    delay(200); // Keep the LED on briefly
+
+    // Turn off the onboard LED
+    digitalWrite(ledPin, LOW);
+
+    // Wait until the button is released (debouncing)
+    while (digitalRead(cols[0]) == LOW || digitalRead(cols[1]) == LOW || digitalRead(cols[2]) == LOW) {
+      delay(10);
+    }
+  }
+}
