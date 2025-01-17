@@ -1,0 +1,51 @@
+/**
+ * Program: 2x3 Matrix Keypad with ESP32
+ * Description:
+ * This program reads input from a 2x3 matrix keypad and prints the pressed key
+ * to the Serial Monitor using the Keypad library.
+ *
+ * Hardware Setup:
+ * - A 2x3 matrix keypad is connected to the ESP32.
+ * - The rows of the keypad are connected to GPIO 15 and GPIO 2.
+ * - The columns of the keypad are connected to GPIO 12, GPIO 4, and GPIO 13.
+ *
+ * Requirements:
+ * - Ensure the Keypad library is installed in your Arduino IDE.
+ * - Match the pin connections and layout with the keypad wiring.
+ */
+
+#include <Keypad.h>
+
+// Define the number of rows and columns for the keypad
+const byte ROWS = 2;  // Number of rows in the keypad
+const byte COLS = 3;  // Number of columns in the keypad
+
+// Define the layout of the keypad buttons
+char hexaKeys[ROWS][COLS] = {
+  {'1', '2', '3'},  // First row
+  {'4', '5', '6'}   // Second row
+};
+
+// Define the GPIO pins connected to the rows and columns of the keypad
+byte rowPins[ROWS] = {15, 2};       // GPIO 15 -> Row 1, GPIO 2 -> Row 2
+byte colPins[COLS] = {12, 4, 13};   // GPIO 12 -> Col 1, GPIO 4 -> Col 2, GPIO 13 -> Col 3
+
+// Create a Keypad object with the defined keymap and pin configuration
+Keypad customKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
+
+void setup() {
+  // Initialize Serial Monitor for debugging and displaying pressed keys
+  Serial.begin(9600);
+  Serial.println("Keypad Test Ready");
+}
+
+void loop() {
+  // Get the key currently pressed on the keypad
+  char customKey = customKeypad.getKey();
+
+  // If a key is pressed, print it to the Serial Monitor
+  if (customKey) {
+    Serial.print("Key Pressed: ");
+    Serial.println(customKey);
+  }
+}
